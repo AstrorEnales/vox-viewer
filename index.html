@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <title>VOX File Structure Viewer</title>
+  <style>
+    .code {
+      white-space: pre;
+      font-family: monospace;
+    }
+    .color-box {
+      width: 16px;
+      min-width: 16px;
+      max-width: 16px;
+      height: 16px;
+      min-height: 16px;
+      max-height: 16px;
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body class="bg-dark text-light">
+  <nav class="navbar navbar-dark bg-success">
+    <div class="container-fluid">
+      <span class="navbar-brand">VOX File Structure Viewer</span>
+      <a href="https://github.com/AstrorEnales/vox-viewer" target="_blank" style="color: white"><i class="fs-4 bi bi-github"></i></a>
+    </div>
+  </nav>
+  <main role="main">
+    <div class="container-fluid my-4">
+      <div class="row">
+        <div class="col">
+          <div class="input-group mx-1" style="width: 550px">
+            <input type="file" class="form-control" id="voxInput">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="fileStructureContainer" class="container-fluid code"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
