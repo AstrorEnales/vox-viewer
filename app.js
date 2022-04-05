@@ -148,7 +148,12 @@ window.addEventListener('load', function() {
     var file = this.files[0];
     var reader = new FileReader();
     reader.onload = function() {
+      const canvasContainer = document.getElementById('canvasContainer');
       const outputContainer = document.getElementById('fileStructureContainer');
+      canvasContainer.innerHTML = '';
+      const modelSizes = [];
+      const modelGrids = [];
+      let palette = DEFAULT_PALETTE;
       const stream = new MemoryStream(this.result);
       let outputText = '';
       if (stream.readNextRiffId() === 'VOX ') {
@@ -166,16 +171,21 @@ window.addEventListener('load', function() {
             const x = stream.readInt32();
             const y = stream.readInt32();
             const z = stream.readInt32();
+            modelSizes.push([x, y, z]);
             outputText += '\tsize: [' + x + ', ' + y + ', ' + z + ']\n';
           } else if (riffId === 'XYZI') {
             const numVoxels = stream.readInt32();
             outputText += '\tnum voxels: ' + numVoxels + '\n';
+            const size = modelSizes[modelSizes.length - 1];
+            const grid = new Array(size[0] * size[1] * size[2]);
             for (let i = 0; i < numVoxels; i++) {
               const x = stream.readUint8();
               const y = stream.readUint8();
               const z = stream.readUint8();
               const color = stream.readUint8();
+              grid[x + y * size[0] + z * size[0] * size[1]] = color;
             }
+            modelGrids.push(grid);
           } else if (riffId === 'NOTE') {
             const numColorNames = stream.readInt32();
             outputText += '\tnum color names: ' + numColorNames + '\n';
@@ -261,6 +271,7 @@ window.addEventListener('load', function() {
                 customPalette.push(color);
               }
             }
+            palette = customPalette;
             for (let i = 0; i < 256; i++) {
               outputText += '<div class="color-box" style="background-color: rgb(' + customPalette[i][0] + ',' + customPalette[i][1] + ',' + customPalette[i][2] + ')"></div>';
               if ((i + 1) % 64 === 0) {
@@ -271,6 +282,48 @@ window.addEventListener('load', function() {
           if (currentPosition + contentByteLength != stream.position()) {
             stream.seek(currentPosition + contentByteLength);
           }
+        }
+        try {
+          for (let i = 0; i < modelSizes.length; i++) {
+            const surface = document.createElement('canvas');
+            surface.style.width = '200px';
+            surface.style.height = '200px';
+            surface.style.border = '1px solid grey';
+            surface.width = 200;
+            surface.height = 200;
+            canvasContainer.appendChild(surface);
+            const context = surface.getContext('2d');
+            context.fillStyle = '#000000';
+            context.fillRect(0, 0, 200, 200);
+            const voxelSize = 200.0 / Math.max(modelSizes[i][0], modelSizes[i][1], modelSizes[i][2]) * 0.5;
+            const voxelDiag = voxelSize * Math.sin(Math.PI / 4.0);
+            const cubePath = new Path2D(`M0,0l${voxelDiag},-${voxelDiag}l0,-${voxelSize}l-${voxelDiag},-${voxelDiag}l-${voxelDiag},${voxelDiag}l0,${voxelSize}Z`);
+            context.fillStyle = '#FFFFFF';
+            context.font = 'Arial 12px';
+            context.fillText('id ' + i, 4, 10);
+            context.strokeStyle = '#FFFFFF44';
+            context.lineWidth = 1;
+            for (let z = 0; z < modelSizes[i][2]; z++) {
+              for (let y = modelSizes[i][1] - 1; y >= 0; y--) {
+                for (let x = modelSizes[i][0] - 1; x >= 0; x--) {
+                  const index = x + y * modelSizes[i][0] + z * modelSizes[i][0] * modelSizes[i][1];
+                  const colorId = modelGrids[i][index];
+                  if (colorId !== undefined) {
+                    const colorRGB = palette[colorId];
+                    context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
+                    context.save();
+                    context.translate(100, 200);
+                    context.translate(x * voxelDiag - y * voxelDiag, x * -voxelDiag + y * -voxelDiag - z * voxelSize);
+                    context.fill(cubePath);
+                    //context.stroke(cubePath);
+                    context.restore();
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore
         }
       } else {
         outputText += 'Not a valid VOX file!';
