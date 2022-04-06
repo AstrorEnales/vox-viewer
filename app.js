@@ -149,10 +149,14 @@ window.addEventListener('load', function() {
     var reader = new FileReader();
     reader.onload = function() {
       const canvasContainer = document.getElementById('canvasContainer');
+      const sceneGraphContainer = document.getElementById('sceneGraphContainer');
       const outputContainer = document.getElementById('fileStructureContainer');
       canvasContainer.innerHTML = '';
+      sceneGraphContainer.innerHTML = '';
+      outputContainer.innerHTML = '';
       const modelSizes = [];
       const modelGrids = [];
+      const nodes = {};
       let palette = DEFAULT_PALETTE;
       const stream = new MemoryStream(this.result);
       let outputText = '';
@@ -217,34 +221,77 @@ window.addEventListener('load', function() {
               }
             }
           } else if (riffId === 'nTRN') {
-            outputText += '\tnode id: ' + stream.readInt32() + '\n';
-            outputText += '\tnode properties: ' + JSON.stringify(stream.readDict()) + '\n';
-            outputText += '\tchild node id: ' + stream.readInt32() + '\n';
+            const nodeId = stream.readInt32();
+            const nodeProperties = JSON.stringify(stream.readDict());
+            const childNodeId = stream.readInt32();
             // reserved id, must be -1
             stream.readInt32();
-            outputText += '\tlayer id: ' + stream.readInt32() + '\n';
+            const layerId = stream.readInt32();
             const numFrames = stream.readInt32();
+            const frameProperties = new Array(numFrames);
+            for (let i = 0; i < numFrames; i++) {
+              frameProperties[i] = JSON.stringify(stream.readDict());
+            }
+            outputText += '\tnode id: ' + nodeId + '\n';
+            outputText += '\tnode properties: ' + nodeProperties + '\n';
+            outputText += '\tchild node id: ' + childNodeId + '\n';
+            outputText += '\tlayer id: ' + layerId + '\n';
             outputText += '\tnum frames: ' + numFrames + '\n';
             for (let i = 0; i < numFrames; i++) {
-              outputText += '\tframe ' + i + ': ' + JSON.stringify(stream.readDict()) + '\n';
+              outputText += '\tframe ' + i + ': ' + frameProperties[i] + '\n';
             }
+            nodes[nodeId] = {
+              type: 'TRN',
+              id: nodeId,
+              properties: nodeProperties,
+              childNodeId: childNodeId,
+              childIds: [childNodeId],
+              layerId: layerId,
+              frameProperties: frameProperties,
+            };
           } else if (riffId === 'nGRP') {
-            outputText += '\tnode id: ' + stream.readInt32() + '\n';
-            outputText += '\tnode properties: ' + JSON.stringify(stream.readDict()) + '\n';
+            const nodeId = stream.readInt32();
+            const nodeProperties = JSON.stringify(stream.readDict());
             const numChildren = stream.readInt32();
-            outputText += '\tnum children: ' + numChildren + '\n';
+            const childIds = new Array(numChildren);
             for (let i = 0; i < numChildren; i++) {
-              outputText += '\tchild node id: ' + stream.readInt32() + '\n';
+              childIds[i] = stream.readInt32();
             }
+            outputText += '\tnode id: ' + nodeId + '\n';
+            outputText += '\tnode properties: ' + nodeProperties + '\n';
+            outputText += '\tnum children: ' + numChildren + '\n';
+            outputText += '\tchild node ids: ' + JSON.stringify(childIds) + '\n';
+            nodes[nodeId] = {
+              type: 'GRP',
+              id: nodeId,
+              properties: nodeProperties,
+              childIds: childIds,
+            };
           } else if (riffId === 'nSHP') {
-            outputText += '\tnode id: ' + stream.readInt32() + '\n';
-            outputText += '\tnode properties: ' + JSON.stringify(stream.readDict()) + '\n';
+            const nodeId = stream.readInt32();
+            const nodeProperties = JSON.stringify(stream.readDict());
             const numModels = stream.readInt32();
+            const modelIds = new Array(numModels);
+            const modelProperties = new Array(numModels);
+            for (let i = 0; i < numModels; i++) {
+              modelIds[i] = stream.readInt32();
+              modelProperties[i] = JSON.stringify(stream.readDict());
+            }
+            outputText += '\tnode id: ' + nodeId + '\n';
+            outputText += '\tnode properties: ' + nodeProperties + '\n';
             outputText += '\tnum models: ' + numModels + '\n';
             for (let i = 0; i < numModels; i++) {
-              outputText += '\tmodel id: ' + stream.readInt32() + '\n';
-              outputText += '\tmodel properties: ' + JSON.stringify(stream.readDict()) + '\n';
+              outputText += '\tmodel id: ' + modelIds[i] + '\n';
+              outputText += '\tmodel properties: ' + modelProperties[i] + '\n';
             }
+            nodes[nodeId] = {
+              type: 'SHP',
+              id: nodeId,
+              properties: nodeProperties,
+              childIds: [],
+              modelIds: modelIds,
+              modelProperties: modelProperties,
+            };
           } else if (riffId === 'LAYR') {
             outputText += '\tlayer id: ' + stream.readInt32() + '\n';
             outputText += '\tlayer properties: ' + JSON.stringify(stream.readDict()) + '\n';
@@ -323,7 +370,12 @@ window.addEventListener('load', function() {
             }
           }
         } catch {
-          // ignore
+          // ignored
+        }
+        try {
+          sceneGraphContainer.innerHTML = recurseSceneGraph(nodes, nodes[0], '');
+        } catch {
+          // ignored
         }
       } else {
         outputText += 'Not a valid VOX file!';
@@ -333,3 +385,22 @@ window.addEventListener('load', function() {
     reader.readAsArrayBuffer(file);
   });
 }, false);
+
+function recurseSceneGraph(nodes, node) {
+  let nodeText = 'id ' + node.id + ' [' + node.type + ']<br/>properties: ' + node.properties;
+  if (node.type === 'SHP') {
+    for (let i = 0; i < node.modelIds.length; i++) {
+      nodeText += '<br/>model: id ' + node.modelIds[i] + ' ' + node.modelProperties[i];
+    }
+    return nodeText;
+  } else if (node.type === 'TRN') {
+    nodeText += '<br/>layer id: ' + node.layerId;
+    nodeText += '<br/>frame properties: ' + node.frameProperties;
+  }
+  let sceneGraphText = '<table class="table table-bordered table-dark"><tbody><tr><td>' + nodeText + '</td><td>';
+  for (let i = 0; i < node.childIds.length; i++) {
+    sceneGraphText += recurseSceneGraph(nodes, nodes[node.childIds[i]]);
+  }
+  sceneGraphText += '</td></tr></tbody></table>';
+  return sceneGraphText;
+}
