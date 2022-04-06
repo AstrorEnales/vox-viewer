@@ -340,8 +340,15 @@ window.addEventListener('load', function() {
             surface.height = 200;
             canvasContainer.appendChild(surface);
             const context = surface.getContext('2d');
-            context.fillStyle = '#000000';
-            context.fillRect(0, 0, 200, 200);
+            let dark = true;
+            for (let y = 0; y < 200; y += 20) {
+              for (let x = 0; x < 200; x += 20) {
+                dark = !dark;
+                context.fillStyle = dark ? '#444444' : '#666666';
+                context.fillRect(x, y, 20, 20);
+              }
+              dark = !dark;
+            }
             const voxelSize = 200.0 / Math.max(modelSizes[i][0], modelSizes[i][1], modelSizes[i][2]) * 0.5;
             const voxelDiagY = voxelSize * Math.sin(30 * (Math.PI / 180.0));
             const voxelDiagX = Math.sqrt(voxelSize**2 - voxelDiagY**2);
