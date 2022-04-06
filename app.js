@@ -343,10 +343,11 @@ window.addEventListener('load', function() {
             context.fillStyle = '#000000';
             context.fillRect(0, 0, 200, 200);
             const voxelSize = 200.0 / Math.max(modelSizes[i][0], modelSizes[i][1], modelSizes[i][2]) * 0.5;
-            const voxelDiag = voxelSize * Math.sin(Math.PI / 4.0);
-            const cubeTopPath = new Path2D(`M0,-${voxelSize}l${voxelDiag},-${voxelDiag}l-${voxelDiag},-${voxelDiag}l-${voxelDiag},${voxelDiag}Z`);
-            const cubeRightPath = new Path2D(`M0,0l0,-${voxelSize}l${voxelDiag},-${voxelDiag}l0,${voxelSize}Z`);
-            const cubeLeftPath = new Path2D(`M0,0l0,-${voxelSize}l-${voxelDiag},-${voxelDiag}l0,${voxelSize}Z`);
+            const voxelDiagY = voxelSize * Math.sin(30 * (Math.PI / 180.0));
+            const voxelDiagX = Math.sqrt(voxelSize**2 - voxelDiagY**2);
+            const cubeTopPath = new Path2D(`M0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},${voxelDiagY}Z`);
+            const cubeRightPath = new Path2D(`M0,0l0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l0,${voxelSize}Z`);
+            const cubeLeftPath = new Path2D(`M0,0l0,-${voxelSize}l-${voxelDiagX},-${voxelDiagY}l0,${voxelSize}Z`);
             context.fillStyle = '#FFFFFF';
             context.font = 'Arial 12px';
             context.fillText('id ' + i, 4, 10);
@@ -363,7 +364,7 @@ window.addEventListener('load', function() {
                     const colorRGBDarker2 = [Math.max(0, colorRGB[0] * 75 / 100), Math.max(0, colorRGB[1] * 75 / 100), Math.max(0, colorRGB[2] * 75 / 100)];
                     context.save();
                     context.translate(100, 200);
-                    context.translate(x * voxelDiag - y * voxelDiag, x * -voxelDiag + y * -voxelDiag - z * voxelSize);
+                    context.translate(x * voxelDiagX - y * voxelDiagX, x * -voxelDiagY + y * -voxelDiagY - z * voxelSize);
                     context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
                     context.fill(cubeRightPath);
                     context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
