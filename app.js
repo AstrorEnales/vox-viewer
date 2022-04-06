@@ -344,7 +344,9 @@ window.addEventListener('load', function() {
             context.fillRect(0, 0, 200, 200);
             const voxelSize = 200.0 / Math.max(modelSizes[i][0], modelSizes[i][1], modelSizes[i][2]) * 0.5;
             const voxelDiag = voxelSize * Math.sin(Math.PI / 4.0);
-            const cubePath = new Path2D(`M0,0l${voxelDiag},-${voxelDiag}l0,-${voxelSize}l-${voxelDiag},-${voxelDiag}l-${voxelDiag},${voxelDiag}l0,${voxelSize}Z`);
+            const cubeTopPath = new Path2D(`M0,-${voxelSize}l${voxelDiag},-${voxelDiag}l-${voxelDiag},-${voxelDiag}l-${voxelDiag},${voxelDiag}Z`);
+            const cubeRightPath = new Path2D(`M0,0l0,-${voxelSize}l${voxelDiag},-${voxelDiag}l0,${voxelSize}Z`);
+            const cubeLeftPath = new Path2D(`M0,0l0,-${voxelSize}l-${voxelDiag},-${voxelDiag}l0,${voxelSize}Z`);
             context.fillStyle = '#FFFFFF';
             context.font = 'Arial 12px';
             context.fillText('id ' + i, 4, 10);
@@ -357,12 +359,17 @@ window.addEventListener('load', function() {
                   const colorId = modelGrids[i][index];
                   if (colorId !== undefined) {
                     const colorRGB = palette[colorId];
-                    context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
+                    const colorRGBDarker1 = [Math.max(0, colorRGB[0] * 90 / 100), Math.max(0, colorRGB[1] * 90 / 100), Math.max(0, colorRGB[2] * 90 / 100)];
+                    const colorRGBDarker2 = [Math.max(0, colorRGB[0] * 75 / 100), Math.max(0, colorRGB[1] * 75 / 100), Math.max(0, colorRGB[2] * 75 / 100)];
                     context.save();
                     context.translate(100, 200);
                     context.translate(x * voxelDiag - y * voxelDiag, x * -voxelDiag + y * -voxelDiag - z * voxelSize);
-                    context.fill(cubePath);
-                    //context.stroke(cubePath);
+                    context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
+                    context.fill(cubeRightPath);
+                    context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
+                    context.fill(cubeLeftPath);
+                    context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
+                    context.fill(cubeTopPath);
                     context.restore();
                   }
                 }
