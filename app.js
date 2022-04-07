@@ -409,15 +409,21 @@ window.addEventListener('load', function() {
                     context.translate(pos[0], pos[1]);
                     if (y === 0 || modelGrids[i][getIndex(x, y - 1, z)] === undefined) {
                       context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
+                      context.strokeStyle = context.fillStyle;
                       context.fill(cubeRightPath);
+                      context.stroke(cubeRightPath);
                     }
                     if (x === 0 || modelGrids[i][getIndex(x - 1, y, z)] === undefined) {
                       context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
+                      context.strokeStyle = context.fillStyle;
                       context.fill(cubeLeftPath);
+                      context.stroke(cubeLeftPath);
                     }
                     if (z === height - 1 || modelGrids[i][getIndex(x, y, z + 1)] === undefined) {
                       context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
+                      context.strokeStyle = context.fillStyle;
                       context.fill(cubeTopPath);
+                      context.stroke(cubeTopPath);
                     }
                     context.restore();
                   }
