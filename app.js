@@ -332,46 +332,79 @@ window.addEventListener('load', function() {
         }
         try {
           for (let i = 0; i < modelSizes.length; i++) {
+            const width = modelSizes[i][0];
+            const depth = modelSizes[i][1];
+            const height = modelSizes[i][2];
             const surface = document.createElement('canvas');
-            surface.style.width = '200px';
-            surface.style.height = '200px';
-            surface.style.border = '1px solid grey';
             surface.width = 200;
             surface.height = 200;
+            surface.style.width = surface.width + 'px';
+            surface.style.height = surface.height + 'px';
+            surface.style.border = '1px solid grey';
             canvasContainer.appendChild(surface);
             const context = surface.getContext('2d');
             let dark = true;
-            for (let y = 0; y < 200; y += 20) {
-              for (let x = 0; x < 200; x += 20) {
-                dark = !dark;
+            for (let y = 0; y < surface.height; y += 20) {
+              const rowStart = dark;
+              for (let x = 0; x < surface.width; x += 20) {
                 context.fillStyle = dark ? '#444444' : '#666666';
                 context.fillRect(x, y, 20, 20);
+                dark = !dark;
               }
-              dark = !dark;
+              dark = !rowStart;
             }
-            const voxelSize = 200.0 / Math.max(modelSizes[i][0], modelSizes[i][1], modelSizes[i][2]) * 0.5;
-            const voxelDiagY = voxelSize * Math.sin(30 * (Math.PI / 180.0));
+            const sinAlphaIsometric = Math.sin(30 * (Math.PI / 180.0));
+            // Determine the voxel size by calculating the max size of the bounds
+            const maxSize = Math.max((width + depth) * Math.sqrt(1 - sinAlphaIsometric**2), (width + depth) * sinAlphaIsometric + height);
+            const voxelSize = (Math.min(surface.width, surface.height) - 8) / maxSize;
+            const voxelDiagY = voxelSize * sinAlphaIsometric;
             const voxelDiagX = Math.sqrt(voxelSize**2 - voxelDiagY**2);
+            const getPosition = function(x, y, z) {
+              return [
+                x * voxelDiagX - y * voxelDiagX,
+                x * -voxelDiagY + y * -voxelDiagY - z * voxelSize
+              ];
+            };
+            const totalWidth = getPosition(width, 0, 0)[0] - getPosition(0, depth, 0)[0];
+            const totalHeight = getPosition(width, depth, height)[1];
             const cubeTopPath = new Path2D(`M0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},${voxelDiagY}Z`);
             const cubeRightPath = new Path2D(`M0,0l0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l0,${voxelSize}Z`);
             const cubeLeftPath = new Path2D(`M0,0l0,-${voxelSize}l-${voxelDiagX},-${voxelDiagY}l0,${voxelSize}Z`);
             context.fillStyle = '#FFFFFF';
             context.font = 'Arial 12px';
             context.fillText('id ' + i, 4, 10);
-            context.strokeStyle = '#FFFFFF44';
+            context.translate(
+              surface.width * 0.5 - (width - depth) * voxelDiagX * 0.5,
+              surface.height * 0.5 - totalHeight * 0.5
+            );
+            context.strokeStyle = '#FF0000';
             context.lineWidth = 1;
-            for (let z = 0; z < modelSizes[i][2]; z++) {
-              for (let y = modelSizes[i][1] - 1; y >= 0; y--) {
-                for (let x = modelSizes[i][0] - 1; x >= 0; x--) {
-                  const index = x + y * modelSizes[i][0] + z * modelSizes[i][0] * modelSizes[i][1];
+            context.beginPath();
+            context.moveTo(...getPosition(width, depth, 0));
+            context.lineTo(...getPosition(width, 0, 0));
+            context.lineTo(...getPosition(width, 0, height));
+            context.lineTo(...getPosition(width, depth, height));
+            context.lineTo(...getPosition(0, depth, height));
+            context.lineTo(...getPosition(0, depth, 0));
+            context.lineTo(...getPosition(width, depth, 0));
+            context.lineTo(...getPosition(width, depth, height));
+            context.moveTo(...getPosition(0, depth, 0));
+            context.lineTo(...getPosition(0, 0, 0));
+            context.lineTo(...getPosition(width, 0, 0));
+            context.stroke();
+            context.strokeStyle = '#FFFFFF44';
+            for (let z = 0; z < height; z++) {
+              for (let y = depth - 1; y >= 0; y--) {
+                for (let x = width - 1; x >= 0; x--) {
+                  const index = x + y * width + z * width * depth;
                   const colorId = modelGrids[i][index];
                   if (colorId !== undefined) {
                     const colorRGB = palette[colorId];
                     const colorRGBDarker1 = [Math.max(0, colorRGB[0] * 90 / 100), Math.max(0, colorRGB[1] * 90 / 100), Math.max(0, colorRGB[2] * 90 / 100)];
                     const colorRGBDarker2 = [Math.max(0, colorRGB[0] * 75 / 100), Math.max(0, colorRGB[1] * 75 / 100), Math.max(0, colorRGB[2] * 75 / 100)];
+                    const pos = getPosition(x, y, z);
                     context.save();
-                    context.translate(100, 200);
-                    context.translate(x * voxelDiagX - y * voxelDiagX, x * -voxelDiagY + y * -voxelDiagY - z * voxelSize);
+                    context.translate(pos[0], pos[1]);
                     context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
                     context.fill(cubeRightPath);
                     context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
