@@ -365,7 +365,10 @@ window.addEventListener('load', function() {
                 x * -voxelDiagY + y * -voxelDiagY - z * voxelSize
               ];
             };
-            const totalWidth = getPosition(width, 0, 0)[0] - getPosition(0, depth, 0)[0];
+            const getIndex = function(x, y, z) {
+              return x + y * width + z * width * depth;
+            };
+            // const totalWidth = getPosition(width, 0, 0)[0] - getPosition(0, depth, 0)[0];
             const totalHeight = getPosition(width, depth, height)[1];
             const cubeTopPath = new Path2D(`M0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},-${voxelDiagY}l-${voxelDiagX},${voxelDiagY}Z`);
             const cubeRightPath = new Path2D(`M0,0l0,-${voxelSize}l${voxelDiagX},-${voxelDiagY}l0,${voxelSize}Z`);
@@ -374,8 +377,8 @@ window.addEventListener('load', function() {
             context.font = 'Arial 12px';
             context.fillText('id ' + i, 4, 10);
             context.translate(
-              surface.width * 0.5 - (width - depth) * voxelDiagX * 0.5,
-              surface.height * 0.5 - totalHeight * 0.5
+              ~~(surface.width * 0.5 - (width - depth) * voxelDiagX * 0.5),
+              ~~(surface.height * 0.5 - totalHeight * 0.5)
             );
             context.strokeStyle = '#FF0000';
             context.lineWidth = 1;
@@ -396,8 +399,7 @@ window.addEventListener('load', function() {
             for (let z = 0; z < height; z++) {
               for (let y = depth - 1; y >= 0; y--) {
                 for (let x = width - 1; x >= 0; x--) {
-                  const index = x + y * width + z * width * depth;
-                  const colorId = modelGrids[i][index];
+                  const colorId = modelGrids[i][getIndex(x, y, z)];
                   if (colorId !== undefined) {
                     const colorRGB = palette[colorId];
                     const colorRGBDarker1 = [Math.max(0, colorRGB[0] * 90 / 100), Math.max(0, colorRGB[1] * 90 / 100), Math.max(0, colorRGB[2] * 90 / 100)];
@@ -405,12 +407,18 @@ window.addEventListener('load', function() {
                     const pos = getPosition(x, y, z);
                     context.save();
                     context.translate(pos[0], pos[1]);
-                    context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
-                    context.fill(cubeRightPath);
-                    context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
-                    context.fill(cubeLeftPath);
-                    context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
-                    context.fill(cubeTopPath);
+                    if (y === 0 || modelGrids[i][getIndex(x, y - 1, z)] === undefined) {
+                      context.fillStyle = 'rgb(' + colorRGBDarker2[0] + ',' + colorRGBDarker2[1] + ',' + colorRGBDarker2[2] + ')';
+                      context.fill(cubeRightPath);
+                    }
+                    if (x === 0 || modelGrids[i][getIndex(x - 1, y, z)] === undefined) {
+                      context.fillStyle = 'rgb(' + colorRGBDarker1[0] + ',' + colorRGBDarker1[1] + ',' + colorRGBDarker1[2] + ')';
+                      context.fill(cubeLeftPath);
+                    }
+                    if (z === height - 1 || modelGrids[i][getIndex(x, y, z + 1)] === undefined) {
+                      context.fillStyle = 'rgb(' + colorRGB[0] + ',' + colorRGB[1] + ',' + colorRGB[2] + ')';
+                      context.fill(cubeTopPath);
+                    }
                     context.restore();
                   }
                 }
