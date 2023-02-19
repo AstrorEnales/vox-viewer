@@ -341,7 +341,6 @@ window.addEventListener('load', function() {
             surface.style.width = surface.width + 'px';
             surface.style.height = surface.height + 'px';
             surface.style.border = '1px solid grey';
-            canvasContainer.appendChild(surface);
             const context = surface.getContext('2d');
             let dark = true;
             for (let y = 0; y < surface.height; y += 20) {
@@ -430,6 +429,7 @@ window.addEventListener('load', function() {
                 }
               }
             }
+            canvasContainer.appendChild(surface);
           }
         } catch {
           // ignored
@@ -449,20 +449,24 @@ window.addEventListener('load', function() {
 }, false);
 
 function recurseSceneGraph(nodes, node) {
-  let nodeText = 'id ' + node.id + ' [' + node.type + ']<br/>properties: ' + node.properties;
+  const color = node.type === 'SHP' ? '#65647C' : (node.type === 'TRN' ? '#5F7161' : '#85586F');
+  let nodeText = '<span class="badge bg-dark">id ' + node.id + '</span>&nbsp;<span class="badge bg-dark">[' + node.type + ']</span><br/>properties: ' + node.properties;
   if (node.type === 'SHP') {
     for (let i = 0; i < node.modelIds.length; i++) {
-      nodeText += '<br/>model: id ' + node.modelIds[i] + ' ' + node.modelProperties[i];
+      nodeText += '<br/>model: <span class="badge text-bg-success">id ' + node.modelIds[i] + '</span> ' + node.modelProperties[i];
     }
-    return nodeText;
   } else if (node.type === 'TRN') {
     nodeText += '<br/>layer id: ' + node.layerId;
     nodeText += '<br/>frame properties: ' + node.frameProperties;
   }
-  let sceneGraphText = '<table class="table table-bordered table-dark"><tbody><tr><td>' + nodeText + '</td><td>';
-  for (let i = 0; i < node.childIds.length; i++) {
-    sceneGraphText += recurseSceneGraph(nodes, nodes[node.childIds[i]]);
+  let sceneGraphText = '<table class="table table-sm table-bordered table-dark"><tbody><tr><td style="background-color:' + color + '">' + nodeText + '</td>';
+  if (node.childIds.length > 0) {
+    sceneGraphText += '<td style="padding:0">';
+    for (let i = 0; i < node.childIds.length; i++) {
+      sceneGraphText += recurseSceneGraph(nodes, nodes[node.childIds[i]]);
+    }
+    sceneGraphText += '</td>';
   }
-  sceneGraphText += '</td></tr></tbody></table>';
+  sceneGraphText += '</tr></tbody></table>';
   return sceneGraphText;
 }
