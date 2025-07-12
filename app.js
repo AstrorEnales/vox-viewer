@@ -168,7 +168,9 @@ window.addEventListener('load', function() {
           /*const childrenByteLength = */ stream.readInt32();
           const currentPosition = stream.position();
           outputText += 'Chunk: ' + riffId + '\n';
-          if (riffId === 'PACK') {
+          if (riffId === 'META') {
+            outputText += '\tproperties: ' + JSON.stringify(stream.readDict()) + '\n';
+          } else if (riffId === 'PACK') {
             const numModels = stream.readInt32();
             outputText += '\tnum models: ' + numModels + '\n';
           } else if (riffId === 'SIZE') {
